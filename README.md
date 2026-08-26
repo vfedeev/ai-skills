@@ -14,16 +14,32 @@ AI Skills for Hermes Agent, Codex или Claude Code — набор скилло
 
 ## Установка
 
+### 1. Скачать скилл
+
+**Через git:**
 ```bash
-# Клонировать репозиторий
 git clone https://github.com/vfedeev/ai-skills.git
-
-# Скопировать нужный скилл
-cp -r ai-skills/<skill-name> ~/.hermes/skills/media/
-
-# Запустить предконфигурацию (если есть setup.py)
-python3 ~/.hermes/skills/media/<skill-name>/scripts/setup.py
+cp -r ai-skills/<skill-name> <install-path>
 ```
+
+**Через zip:**
+Скачать архив со страницы [Releases](https://github.com/vfedeev/ai-skills/releases) и распаковать в `<install-path>`.
+
+### 2. Указать путь установки
+
+| Агент | Путь установки |
+|-------|----------------|
+| Hermes Agent | `~/.hermes/skills/media/` |
+| Claude Code | `~/.claude/skills/` |
+| Codex | `~/.codex/skills/` |
+
+### 3. Запустить предконфигурацию
+
+```bash
+python3 <install-path>/<skill-name>/scripts/setup.py
+```
+
+Скрипт проверит зависимости и настроит API-ключи.
 
 ## Требования
 
