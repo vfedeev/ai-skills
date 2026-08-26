@@ -1,6 +1,5 @@
 ---
 name: ai-transcribe
-author: Vladimir F
 description: "Транскрибация аудио и видео интервью/созвонов. Поддерживает Groq API (Whisper), OpenAI API и другие STT-провайдеры. Используй когда пользователь просит расшифровать аудио или видео запись разговора, интервью, созвона."
 ---
 
@@ -21,7 +20,7 @@ python3 <install-path>/ai-transcribe/scripts/setup.py
 - Модель STT
 - Временную директорию
 
-Конфиг сохраняется в `~/.hermes/skills/media/ai-transcribe/config.env`.
+Конфиг сохраняется в `<install-path>/ai-transcribe/config.env`.
 
 ## Входные данные
 

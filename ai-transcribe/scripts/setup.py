@@ -67,6 +67,8 @@ def main():
             env_file = Path.home() / ".env"
             with open(env_file, "a") as f:
                 f.write(f"\nGROQ_API_KEY={key}\n")
+            # Restrict permissions on .env file
+            env_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
             print(colored(f"✓ Saved to {env_file}", "green"))
             config["ENV_PATH"] = str(env_file)
         else:
