@@ -1,23 +1,32 @@
 # AI Skills
 
-AI Skills for Hermes Agent.
+AI Skills for Hermes Agent — набор скиллов для расширения возможностей агента.
 
-## Skills
+## Доступные скиллы
 
-### ai-transcribe
-Транскрибация аудио и видео интервью/созвонов. Поддерживает Groq API (Whisper), OpenAI API и другие STT-провайдеры.
+| Скилл | Описание |
+|-------|----------|
+| [ai-transcribe](ai-transcribe/) | Транскрибация аудио и видео интервью/созвонов через Groq/OpenAI |
 
-**Установка:**
+## Установка
+
 ```bash
-# Клонировать скилл
+# Клонировать репозиторий
 git clone https://github.com/vfedeev/ai-skills.git
-cp -r ai-skills/ai-transcribe ~/.hermes/skills/media/
 
-# Запустить предконфигурацию
-python3 ~/.hermes/skills/media/ai-transcribe/scripts/setup.py
+# Скопировать нужный скилл
+cp -r ai-skills/<skill-name> ~/.hermes/skills/media/
+
+# Запустить предконфигурацию (если есть setup.py)
+python3 ~/.hermes/skills/media/<skill-name>/scripts/setup.py
 ```
 
-**Требования:**
+## Требования
+
+- Hermes Agent
 - Python 3.8+
-- ffmpeg (для видео)
-- API-ключ Groq или OpenAI
+- Зависят от конкретного скилла (см. README в подпапке)
+
+## Лицензия
+
+MIT
