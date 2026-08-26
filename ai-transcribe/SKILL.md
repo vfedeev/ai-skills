@@ -10,7 +10,7 @@ description: "Транскрибация аудио и видео интервь
 
 При первом запуске **ОБЯЗАТЕЛЬНО** выполнить скрипт предконфигурации:
 ```bash
-python3 ~/.hermes/skills/media/ai-transcribe/scripts/setup.py
+python3 <install-path>/ai-transcribe/scripts/setup.py
 ```
 
 Скрипт проверит и настроит:
@@ -124,8 +124,8 @@ def transcribe(file_path):
 - Оригинал (НЕ удалять)
 
 **Удалить:**
-- `$TEMP_DIR/audio_whisper.wav`
-- `$TEMP_DIR/chunk_*.wav`
+- `"$TEMP_DIR/audio_whisper.wav"`
+- `"$TEMP_DIR/chunk_*.wav"`
 
 **Спросить:**
 - Тезисы из разговора?

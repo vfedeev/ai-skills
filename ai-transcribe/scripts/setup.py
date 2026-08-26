@@ -6,6 +6,7 @@ Run once on first launch to set up environment.
 
 import os
 import sys
+import stat
 import subprocess
 import shutil
 from pathlib import Path
@@ -85,8 +86,8 @@ def main():
             print("  Ubuntu/Debian: sudo apt install ffmpeg")
             print("  macOS: brew install ffmpeg")
             print("  Arch: sudo pacman -S ffmpeg")
-            print("  Windows: https://ffmpeg.org/download.html"
-            config["HAS_FFMPEG"] = "true"
+            print("  Windows: https://ffmpeg.org/download.html")
+            config["HAS_FFMPEG"] = "unknown"
         else:
             print(colored("⚠ Video processing will not work without ffmpeg.", "yellow"))
             config["HAS_FFMPEG"] = "false"
@@ -189,7 +190,6 @@ def main():
             f.write(f"{key}={val}\n")
 
     # Restrict permissions (only owner can read/write)
-    import stat
     CONFIG_FILE.chmod(stat.S_IRUSR | stat.S_IWUSR)
     
     print(colored(f"✓ Config saved to: {CONFIG_FILE}", "green"))
