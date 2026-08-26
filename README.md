@@ -1,6 +1,6 @@
 # AI Skills
 
-AI Skills for Hermes Agent — набор скиллов для расширения возможностей агента.
+AI Skills for Hermes Agent, Codex или Claude Code — набор скиллов для расширения возможностей агента.
 
 ## Доступные скиллы
 
