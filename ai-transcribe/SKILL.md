@@ -36,12 +36,13 @@ python3 ~/.hermes/skills/media/ai-transcribe/scripts/setup.py
 
 **Загрузить config:**
 ```bash
-source ~/.hermes/skills/media/ai-transcribe/config.env
+# source config.env (путь определяется агентом)
+# источник: <install-path>/ai-transcribe/config.env
 ```
 
 **Если видео и HAS_FFMPEG=true** — извлечь аудио:
 ```bash
-ffmpeg -i video.mp4 -vn -ar 16000 -ac 1 $TEMP_DIR/audio_whisper.wav
+ffmpeg -i video.mp4 -vn -ar 16000 -ac 1 "$TEMP_DIR/audio_whisper.wav"
 ```
 
 **Если видео и HAS_FFMPEG=false** — ошибка: нет ffmpeg, видео не обработать.
@@ -50,7 +51,7 @@ ffmpeg -i video.mp4 -vn -ar 16000 -ac 1 $TEMP_DIR/audio_whisper.wav
 
 **Проверить длительность (если HAS_FFPROBE=true):**
 ```bash
-ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $TEMP_DIR/audio_whisper.wav
+ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$TEMP_DIR/audio_whisper.wav"
 ```
 
 **Разбиение на чанки:**
@@ -58,7 +59,7 @@ ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:no
 - Пороги уточнить после первого успешного запуска и записать в config.env
 - Разбиение по паузам (тишине):
 ```bash
-ffmpeg -i $TEMP_DIR/audio_whisper.wav -af silencedetect=n=-30dB:d=0.5 -f null - 2>&1 | grep silence_end
+ffmpeg -i "$TEMP_DIR/audio_whisper.wav" -af silencedetect=n=-30dB:d=0.5 -f null - 2>&1 | grep silence_end
 ```
 - Fallback: по 10 минут с оверлапом ±30 сек, дубли убрать при склейке
 

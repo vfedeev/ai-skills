@@ -81,15 +81,11 @@ def main():
         print(colored("ffmpeg not found.", "yellow"))
         install = input("Install ffmpeg? (y/n): ").strip().lower()
         if install == "y":
-            if check_command("apt"):
-                subprocess.run(["sudo", "apt", "update"], check=True)
-                subprocess.run(["sudo", "apt", "install", "-y", "ffmpeg"], check=True)
-            elif check_command("brew"):
-                subprocess.run(["brew", "install", "ffmpeg"], check=True)
-            elif check_command("pacman"):
-                subprocess.run(["sudo", "pacman", "-S", "--noconfirm", "ffmpeg"], check=True)
-            else:
-                print(colored("Cannot auto-install. Install manually.", "red"))
+            print(colored("Install manually:", "yellow"))
+            print("  Ubuntu/Debian: sudo apt install ffmpeg")
+            print("  macOS: brew install ffmpeg")
+            print("  Arch: sudo pacman -S ffmpeg")
+            print("  Windows: https://ffmpeg.org/download.html"
             config["HAS_FFMPEG"] = "true"
         else:
             print(colored("⚠ Video processing will not work without ffmpeg.", "yellow"))
@@ -111,7 +107,7 @@ def main():
     else:
         install = input("Install Python requests? (y/n): ").strip().lower()
         if install == "y":
-            subprocess.run([sys.executable, "-m", "pip", "install", "requests"], check=True)
+            subprocess.run([sys.executable, "-m", "pip", "install", "--user", "requests"], check=True)
             print(colored("✓ requests installed", "green"))
         else:
             print(colored("⚠ Install manually: pip install requests", "yellow"))
@@ -125,11 +121,31 @@ def main():
             print(colored(f"✓ Existing config: {existing['INTERVIEWER_NAME']} ({existing['INTERVIEWER_ROLE']})", "green"))
             config.update(existing)
         else:
-            config["INTERVIEWER_NAME"] = input("Interviewer name (e.g. Vladimir): ").strip()
-            config["INTERVIEWER_ROLE"] = input("Interviewer role (e.g. designer): ").strip()
+            while True:
+                name = input("Interviewer name (e.g. Vladimir): ").strip()
+                if name and all(c.isalpha() or c.isspace() for c in name):
+                    config["INTERVIEWER_NAME"] = name
+                    break
+                print(colored("Invalid name. Use letters and spaces only.", "red"))
+            while True:
+                role = input("Interviewer role (e.g. designer): ").strip()
+                if role and all(c.isalpha() or c.isspace() for c in role):
+                    config["INTERVIEWER_ROLE"] = role
+                    break
+                print(colored("Invalid role. Use letters and spaces only.", "red"))
     else:
-        config["INTERVIEWER_NAME"] = input("Interviewer name (e.g. Vladimir): ").strip()
-        config["INTERVIEWER_ROLE"] = input("Interviewer role (e.g. designer): ").strip()
+        while True:
+            name = input("Interviewer name (e.g. Vladimir): ").strip()
+            if name and all(c.isalpha() or c.isspace() for c in name):
+                config["INTERVIEWER_NAME"] = name
+                break
+            print(colored("Invalid name. Use letters and spaces only.", "red"))
+        while True:
+            role = input("Interviewer role (e.g. designer): ").strip()
+            if role and all(c.isalpha() or c.isspace() for c in role):
+                config["INTERVIEWER_ROLE"] = role
+                break
+            print(colored("Invalid role. Use letters and spaces only.", "red"))
 
     # --- Step 6: STT Model ---
     print("\n--- Step 6: STT Model ---")
@@ -172,6 +188,10 @@ def main():
         for key, val in config.items():
             f.write(f"{key}={val}\n")
 
+    # Restrict permissions (only owner can read/write)
+    import stat
+    CONFIG_FILE.chmod(stat.S_IRUSR | stat.S_IWUSR)
+    
     print(colored(f"✓ Config saved to: {CONFIG_FILE}", "green"))
     print("\n=== Configuration complete ===")
     print(f"\nSummary:")
