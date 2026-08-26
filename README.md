@@ -23,7 +23,6 @@ python3 ~/.hermes/skills/media/<skill-name>/scripts/setup.py
 
 ## Требования
 
-- Hermes Agent
 - Python 3.8+
 - Зависят от конкретного скилла (см. README в подпапке)
 
