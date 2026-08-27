@@ -7,6 +7,7 @@ AI Skills for Hermes Agent, Codex или Claude Code — набор скилло
 | Скилл | Описание |
 |-------|----------|
 | [ai-transcribe](ai-transcribe/) | Транскрибация аудио и видео интервью/созвонов через Groq/OpenAI |
+| [adv-checkup](adv-checkup/) | Проверка рекламных макетов на соответствие законодательству РФ (38-ФЗ, 436-ФЗ, 53-ФЗ) |
 
 ### ai-transcribe
 

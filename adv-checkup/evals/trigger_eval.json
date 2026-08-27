@@ -1,0 +1,22 @@
+[
+  {"query": "проверь этот рекламный макет на соответствие закону", "should_trigger": true},
+  {"query": "есть ли нарушения в этом баннере по закону о рекламе", "should_trigger": true},
+  {"query": "схвали ли макет для публикации", "should_trigger": true},
+  {"query": "reklama checkup - нужно проверить баннер перед отправкой в типографию", "should_trigger": true},
+  {"query": "прислал макет акции, проверь по 38-ФЗ", "should_trigger": true},
+  {"query": "на баннере написано подарки всем - это законно?", "should_trigger": true},
+  {"query": "проверь рекламу косметологической клиники на соответствие ст. 24", "should_trigger": true},
+  {"query": "у нас реклама ЖК, нужно проверить перед размещением на остановке", "should_trigger": true},
+  {"query": "check ad layout for legal compliance", "should_trigger": true},
+  {"query": "макет для экрана в магазине, алкогольная акция - все ли норм с законом?", "should_trigger": true},
+  {"query": "напиши мне код на python", "should_trigger": false},
+  {"query": "сделай баннер для инстаграм", "should_trigger": false},
+  {"query": "какие штрафы за нарушение закона о рекламе", "should_trigger": false},
+  {"query": "создай логотип для компании", "should_trigger": false},
+  {"query": "переведи этот текст на английский", "should_trigger": false},
+  {"query": "найди информацию о конкурентах", "should_trigger": false},
+  {"query": "составь договор на оказание услуг", "should_trigger": false},
+  {"query": "нарисуй иллюстрацию к статье", "should_trigger": false},
+  {"query": "помоги написать резюме", "should_trigger": false},
+  {"query": "настрой автоматизацию в zapier", "should_trigger": false}
+]
