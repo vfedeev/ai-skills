@@ -50,8 +50,8 @@ metadata:
   - Доставить результат
 
 ### 2. Фотограф
-- **Модель:** `xiaomi/mimo-2.5` (если недоступна — уточнить у пользователя)
-- **Делегирование:** `delegate_task(goal=..., context=..., toolsets=["terminal","file"], model={"provider":"xiaomi","model":"mimo-2.5"})`
+- **Модель:** выбирается через clarify (см. Фаза 0)
+- **Делегирование:** `delegate_task(goal=..., context=..., toolsets=["terminal","file"], model={"provider":"...","model":"..."})`
 - **Задачи:**
   - Для каждого конкурента и каждой страницы сделать 3 скриншота через Playwright (headless Chromium):
     - Desktop (1920×1080)
@@ -93,8 +93,8 @@ async def take_screenshots(url, domain, page_name, output_dir):
 **Пути и зависимости:** см. `references/setup.md`
 
 ### 3. Веб-парсер
-- **Модель:** `xiaomi/mimo-2.5` (если недоступна — уточнить у пользователя)
-- **Делегирование:** `delegate_task(goal=..., context=..., toolsets=["web"], model={"provider":"xiaomi","model":"mimo-2.5"})`
+- **Модель:** выбирается через clarify (см. Фаза 0)
+- **Делегирование:** `delegate_task(goal=..., context=..., toolsets=["web"], model={"provider":"...","model":"..."})`
 - **По 1 субагенту на конкурента** (при лимите — очередь по 2-3 параллельно)
 - **Задачи:**
   - Обойти страницы из списка (выбранного через clarify): главная, о компании, контакты, услуги/каталог
@@ -104,7 +104,7 @@ async def take_screenshots(url, domain, page_name, output_dir):
   - Вернуть текст отчёта Директору
 
 ### 4. Критик
-- **Модель:** текущая модель чата
+- **Модель:** текущая модель чата (или выбрать через clarify)
 - **Вызов:** отдельный `delegate_task` от Директора, в context — текст отчёта парсера
 - **Задачи:**
   - Проверить отчёт на галлюцинации и неточности
@@ -138,7 +138,19 @@ async def take_screenshots(url, domain, page_name, output_dir):
    )
    ```
    Если «Другое» — спросить конкретные URLs или пути.
-4. Создать `competitor_analysis_output/` с поддиректориями: `raw/`, `screenshots/`
+4. Выбрать модели для субагентов через `clarify`:
+   ```python
+   parser_model = clarify(
+     question="Модель для Веб-парсеров?",
+     choices=["xiaomi/mimo-2.5", "Текущая модель (self)", "Другое (указать)"]
+   )
+   photographer_model = clarify(
+     question="Модель для Фотографа?",
+     choices=["xiaomi/mimo-2.5", "Текущая модель (self)", "Другое (указать)"]
+   )
+   ```
+   Если «Другое» — спросить `provider:model`.
+5. Создать `competitor_analysis_output/` с поддиректориями: `raw/`, `screenshots/`
 
 ### Фаза 1 — Параллельный сбор
 
@@ -150,7 +162,7 @@ delegate_task(
   goal="Собрать данные о конкуренте {domain}. Заполнить все поля шаблона анализа.",
   context="URL: {url}. Страницы: {pages}. Шаблон: {template_fields}. Источники: web_search + web_extract.",
   toolsets=["web"],
-  model={"provider": "xiaomi", "model": "mimo-2.5"}
+  model={parser_model}  # из clarify
 )
 ```
 
@@ -160,7 +172,7 @@ delegate_task(
   goal="Сделать скриншоты всех конкурентов в 3 вьюпортах через Playwright и упаковать в ZIP.",
   context="Конкуренты и их страницы:\n{competitor_pages}\n\nСкрипт: import asyncio; from playwright.async_api import async_playwright. Python: см. references/setup.md. wait_until=domcontentloaded, timeout=30000, wait_for_timeout(2000) после загрузки. Вьюпорты: desktop 1920x1080, tablet 768x1024, smartphone 375x812. Имена: {domain}--{page}--{viewport}.png. Сохранить в screenshots/{domain}/. Упаковать в ZIP.",
   toolsets=["terminal", "file"],
-  model={"provider": "xiaomi", "model": "mimo-2.5"}
+  model={photographer_model}  # из clarify
 )
 ```
 
@@ -257,4 +269,4 @@ competitor_screenshots.zip
 8. **Иероглифы в отчётах** — LLM могут вставлять китайские/японские/корейские символы. Критик ОБЯЗАТЕЛЬНО проверяет и заменяет на русский. Директор при финальной сборке — повторная проверка всех текстов.
 9. **SearXNG** — POST, не GET. Яндекс — лучший для Runet.
 10. **page_name** — path URL без `/`, fallback `main`.
-11. **Polza.ai** — OpenAI-compatible API, `https://polza.ai/api/v1`, ключ в `.env`. Вызов через `delegate_task` с `model={"provider":"polza.ai","model":"..."}`.
+11. **Провайдеры** — модели выбираются через clarify. Провайдер должен быть настроен в Hermes. См. `references/setup.md`.

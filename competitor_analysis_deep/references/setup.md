@@ -21,18 +21,15 @@
 - **Движки:** Яндекс (лучший для Runet), Google CSE, Bing, Qwant
 - **Документация:** скилл `searxng-setup`
 
-## Polza.ai
+## Провайдеры
 
-- **Endpoint:** `https://polza.ai/api/v1`
-- **Ключ:** `POLZA_API_KEY` в `.env`
-- **Формат:** OpenAI-compatible API
-- **Вызов:** `delegate_task(model={"provider":"polza.ai","model":"..."})`
+Модели для субагентов выбираются через `clarify` при запуске. Провайдер должен быть настроен в Hermes (`config.yaml` + ключ в `.env`).
 
-## Xiaomi (mimo-2.5)
-
-- **Endpoint:** `https://token-plan-sgp.xiaomimimo.com/v1`
-- **Ключ:** `XIAOMI_API_KEY` в `.env`
-- **Вызов:** `delegate_task(model={"provider":"xiaomi","model":"mimo-2.5"})`
+Примеры провайдеров:
+- **Polza.ai** — OpenAI-compatible, `https://polza.ai/api/v1`, ключ `POLZA_API_KEY`
+- **Xiaomi** — `https://token-plan-sgp.xiaomimimo.com/v1`, ключ `XIAOMI_API_KEY`
+- **Alltokens** — бесплатные модели, `https://api.alltokens.ai/v1`
+- **Текущая модель сессии** — без дополнительной настройки
 
 ## Обновление Chromium
 
@@ -42,4 +39,4 @@
 ls /home/vvv/.cache/ms-playwright/chromium-*/chrome-linux64/chrome
 ```
 
-Если путь измён — обновить в SKILL.md и в context Фотографа.
+Если путь изменился — обновить в SKILL.md и в context Фотографа.
