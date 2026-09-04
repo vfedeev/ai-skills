@@ -206,6 +206,18 @@ delegate_task(
 1. Вывести итоговую таблицу в чат
 2. Скинуть архив скриншотов от Фотографа (`MEDIA:`)
 3. Сводка: сколько конкурентов, какие страницы, что найдено
+4. Предложить очистку через `clarify`:
+   ```python
+   cleanup = clarify(
+     question="Удалить кэш и временные файлы скилла?",     choices=["Да, удалить", "Нет, оставить"]
+   )
+   ```
+   Если «Да» — удалить:
+   - `competitor_analysis_output/screenshots/` (PNG-исходники, уже в архиве)
+   - `competitor_analysis_output/raw/` (черновики парсеров)
+   - `~/.hermes/cache/delegation/live/{delegation_id}/` (логи субагентов текущего запуска)
+   - `~/.hermes/cache/delegation/subagent-summary-*{timestamp}*` (саммари текущего запуска)
+   **НЕ удалять:** `final_analysis.md`, `competitor_screenshots.zip`, общий кэш (`~/.hermes/cache/web/`, `~/.cache/ms-playwright/`)
 
 ## Скриншоты
 
