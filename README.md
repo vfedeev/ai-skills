@@ -11,6 +11,7 @@
 | [ultraui-layers](ultraui-layers/) | Визуальный анализ сайтов по 6 слоям Ultra UI (типографика, цвет, анимации, сетка, графика, медиа) | Модель с vision |
 | [text-parser-ru](text-parser-ru/) | Чистка форматирования текста по образцу пользователя: LLM выводит правила из эталона, скрипт-конвейер применяет (переносы/¶/мусор, иероглифы, русская типографика), регресс-чек, выдача txt/docx с Word-структурой | Python 3.8+ (stdlib) |
 | [best-friend](best-friend/) | Ролевой «лучший друг»: неформальная поддержка циклом жалоба→подбадривание, подстройка под тон, настраиваемые режимы, анти-AI-формулировки через humanizer | Hermes Agent, humanizer (рекоменд.) |
+| [youtube-content](youtube-content/) | Транскрипты YouTube-видео в готовые форматы: главы, саммари, тред, блог-пост, цитаты. Конвейер: youtube-transcript-api → yt-dlp субтитры → Groq Whisper для видео без субтитров | Python 3.8+, youtube-transcript-api (venv); для STT: yt-dlp, ffmpeg, GROQ_API_KEY |
 | [obsidian-canvas](obsidian-canvas/) | Картинки (URL/локальные файлы) на .canvas-холсты Obsidian напрямую через файловую систему: list/create/add, автораскладка нод, атомарная запись с защитой от гонки с Syncthing | Python 3.8+ (stdlib; Pillow опц.) |
 
 ## Установка
