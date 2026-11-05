@@ -13,6 +13,7 @@
 | [best-friend](best-friend/) | Ролевой «лучший друг»: неформальная поддержка циклом жалоба→подбадривание, подстройка под тон, настраиваемые режимы, анти-AI-формулировки через humanizer | Hermes Agent, humanizer (рекоменд.) |
 | [youtube-content](youtube-content/) | Транскрипты YouTube-видео в готовые форматы: главы, саммари, тред, блог-пост, цитаты. Конвейер: youtube-transcript-api → yt-dlp субтитры → Groq Whisper для видео без субтитров | Python 3.8+, youtube-transcript-api (venv); для STT: yt-dlp, ffmpeg, GROQ_API_KEY |
 | [obsidian-canvas](obsidian-canvas/) | Картинки (URL/локальные файлы) на .canvas-холсты Obsidian напрямую через файловую систему: list/create/add, автораскладка нод, атомарная запись с защитой от гонки с Syncthing | Python 3.8+ (stdlib; Pillow опц.) |
+| [bem-auditor](bem-auditor/) | БЭМ-аудит слоёв Figma: дерево слоёв → таблица корректур → переименование батчами только после явного «да»; справочник БЭМ (classic/two-dashes) и UIkit 3, детект автоимён Figma, конвейерный валидатор имён | Hermes Agent, Figma MCP (для аудита/правки); Python 3.8+ (stdlib) |
 
 ## Установка
 
