@@ -14,6 +14,7 @@
 | [youtube-content](youtube-content/) | Транскрипты YouTube-видео в готовые форматы: главы, саммари, тред, блог-пост, цитаты. Конвейер: youtube-transcript-api → yt-dlp субтитры → Groq Whisper для видео без субтитров | Python 3.8+, youtube-transcript-api (venv); для STT: yt-dlp, ffmpeg, GROQ_API_KEY |
 | [obsidian-canvas](obsidian-canvas/) | Картинки (URL/локальные файлы) на .canvas-холсты Obsidian напрямую через файловую систему: list/create/add, автораскладка нод, атомарная запись с защитой от гонки с Syncthing | Python 3.8+ (stdlib; Pillow опц.) |
 | [bem-auditor](bem-auditor/) | БЭМ-аудит слоёв Figma: дерево слоёв → таблица корректур → переименование батчами только после явного «да»; справочник БЭМ (classic/two-dashes) и UIkit 3, детект автоимён Figma, конвейерный валидатор имён | Hermes Agent, Figma MCP (для аудита/правки); Python 3.8+ (stdlib) |
+| [design-scaling](design-scaling/) | Масштабирование дизайна сайта в Figma, три этапа: 0 — ч/б композиционный прототип по ФП и фрэнки + первая Hi-fi-концепция; А — правила дизайна и UI-kit из концепции; Б — макеты остальных страниц в едином стиле. Цвета привязываются к переменным (аудит `unbound = []`), QA программной геометрией | Figma: коннектор claude.ai (Claude Code) или MCP figma-console-cloud (Hermes); скилл figma-use |
 
 ## Установка
 
