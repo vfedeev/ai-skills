@@ -1,12 +1,16 @@
-// Пересоздаёт тексты внутри узла с текстовыми стилями UI-kit.
+// Пересоздаёт тексты внутри узла с текстовыми стилями UI-kit — для use_figma / figma_execute.
 // Зачем: шрифты концепции часто установлены только у дизайнера локально, и use_figma
 // не может ни загрузить их, ни менять такие тексты — даже цвет. Клоны секций с ними можно
 // двигать и удалять, но не редактировать и не перекрашивать. Функция заменяет каждый текст новым:
 // те же символы, заливки, размеры, место в auto layout, но со стилем из UI-kit.
 // Потом дизайнер меняет гарнитуру в стилях на оригинальную — и весь макет обновляется.
 //
-// Использование: вставить функцию в скрипт use_figma и вызвать
+// Использование: вставить функцию в скрипт use_figma / figma_execute и вызвать
 //   const res = await restyleTexts(node)  // → { map: { oldId: newId }, unavailableStyles, skipped, … }
+// DRY_RUN = true (умолчание): каждый текст прогоняется полностью — клон создаётся, к нему
+// применяются стили и размеры (для замеров), затем клон удаляется, оригинал остаётся.
+// map заполняется заглушкой '(dry-run)'; planned — сколько текстов было бы пересоздано.
+// Поставить false, чтобы писать по-настоящему.
 // Сразу после — bind-colors.js по тому же узлу: цвета новых текстов скопированы «сырыми».
 // STYLE_KEY подстроить под свою шкалу из дизайн-правила.md.
 
@@ -23,6 +27,10 @@ const STYLE_KEY = (family, style, size, textCase) => {
   }
   return size >= 13 ? 'Текст / S' : 'Текст / XS';
 };
+
+// true — ничего не остаётся: собранный для каждого текста клон удаляется до возврата,
+// оригиналы не трогаются. Поставить false, чтобы писать по-настоящему.
+const DRY_RUN = true;
 
 async function restyleTexts(root) {
   const styles = await figma.getLocalTextStylesAsync();
@@ -42,40 +50,46 @@ async function restyleTexts(root) {
     if (blocked.length) { skipped.push(t.id + ' «' + t.characters.slice(0, 30) + '» → ' + [...new Set(blocked)].join(', ')); continue; }
     const parent = t.parent, idx = parent.children.indexOf(t);
     const n = figma.createText();
-    parent.insertChild(idx, n);
-    n.characters = t.characters;
-    for (const s of segs) {
-      const key = STYLE_KEY(s.fontName.family, s.fontName.style, s.fontSize, s.textCase);
-      const st = byName[norm(key)];
-      if (!st) { missing.add(key); continue; }
-      await n.setRangeTextStyleIdAsync(s.start, s.end, st.id);
-      n.setRangeFills(s.start, s.end, s.fills);
-      if (s.textDecoration !== 'NONE') n.setRangeTextDecoration(s.start, s.end, s.textDecoration);
+    try {
+      parent.insertChild(idx, n);
+      n.characters = t.characters;
+      for (const s of segs) {
+        const key = STYLE_KEY(s.fontName.family, s.fontName.style, s.fontSize, s.textCase);
+        const st = byName[norm(key)];
+        if (!st) { missing.add(key); continue; }
+        await n.setRangeTextStyleIdAsync(s.start, s.end, st.id);
+        n.setRangeFills(s.start, s.end, s.fills);
+        if (s.textDecoration !== 'NONE') n.setRangeTextDecoration(s.start, s.end, s.textDecoration);
+      }
+      n.name = t.name;
+      // ширину колонок в концепции часто держат min/max — без них текст растекается на всю строку
+      n.minWidth = t.minWidth; n.maxWidth = t.maxWidth; n.minHeight = t.minHeight; n.maxHeight = t.maxHeight;
+      // НЕ копировать paragraphSpacing, lineHeight и прочую типографику: установка любого
+      // такого свойства (даже в то же значение) отвязывает текст от стиля. Отбивку абзацев
+      // задавать в самом текстовом стиле.
+      n.textAlignHorizontal = t.textAlignHorizontal;
+      n.textAlignVertical = t.textAlignVertical;
+      n.opacity = t.opacity; n.visible = t.visible;
+      const inAL = 'layoutMode' in parent && parent.layoutMode !== 'NONE';
+      if (t.layoutPositioning === 'ABSOLUTE') n.layoutPositioning = 'ABSOLUTE';
+      if (t.textAutoResize === 'WIDTH_AND_HEIGHT') n.textAutoResize = 'WIDTH_AND_HEIGHT';
+      else { n.resize(Math.max(1, t.width), Math.max(1, t.height)); n.textAutoResize = t.textAutoResize === 'NONE' ? 'NONE' : 'HEIGHT'; }
+      if (inAL && t.layoutPositioning !== 'ABSOLUTE') {
+        n.layoutAlign = t.layoutAlign; n.layoutGrow = t.layoutGrow;
+        try { n.layoutSizingHorizontal = t.layoutSizingHorizontal; } catch (e) {}
+        try { n.layoutSizingVertical = t.layoutSizingVertical; } catch (e) {}
+        if (t.rotation) n.rotation = t.rotation;
+      } else n.relativeTransform = t.relativeTransform;
+      if (!inAL || t.layoutPositioning === 'ABSOLUTE') n.constraints = t.constraints;
+      map[t.id] = DRY_RUN ? '(dry-run)' : n.id;
+      // dry-run: клон — только замера — удалить, оригинал не трогать
+      if (DRY_RUN) n.remove(); else t.remove();
+    } finally {
+      if (DRY_RUN && n.parent) n.remove(); // при сбое dry-run замерный клон не должен остаться в макете
     }
-    n.name = t.name;
-    // ширину колонок в концепции часто держат min/max — без них текст растекается на всю строку
-    n.minWidth = t.minWidth; n.maxWidth = t.maxWidth; n.minHeight = t.minHeight; n.maxHeight = t.maxHeight;
-    // НЕ копировать paragraphSpacing, lineHeight и прочую типографику: установка любого
-    // такого свойства (даже в то же значение) отвязывает текст от стиля. Отбивку абзацев
-    // задавать в самом текстовом стиле.
-    n.textAlignHorizontal = t.textAlignHorizontal;
-    n.textAlignVertical = t.textAlignVertical;
-    n.opacity = t.opacity; n.visible = t.visible;
-    const inAL = 'layoutMode' in parent && parent.layoutMode !== 'NONE';
-    if (t.layoutPositioning === 'ABSOLUTE') n.layoutPositioning = 'ABSOLUTE';
-    if (t.textAutoResize === 'WIDTH_AND_HEIGHT') n.textAutoResize = 'WIDTH_AND_HEIGHT';
-    else { n.resize(Math.max(1, t.width), Math.max(1, t.height)); n.textAutoResize = t.textAutoResize === 'NONE' ? 'NONE' : 'HEIGHT'; }
-    if (inAL && t.layoutPositioning !== 'ABSOLUTE') {
-      n.layoutAlign = t.layoutAlign; n.layoutGrow = t.layoutGrow;
-      try { n.layoutSizingHorizontal = t.layoutSizingHorizontal; } catch (e) {}
-      try { n.layoutSizingVertical = t.layoutSizingVertical; } catch (e) {}
-      if (t.rotation) n.rotation = t.rotation;
-    } else n.relativeTransform = t.relativeTransform;
-    if (!inAL || t.layoutPositioning === 'ABSOLUTE') n.constraints = t.constraints;
-    map[t.id] = n.id;
-    t.remove();
   }
   // unavailableStyles не пусто — в стилях уже стоят оригинальные шрифты: попросить дизайнера
   // вернуть замены на время сборки (references/colors.md, «Привязка цветов», шаг 4); skipped — нетронутые тексты
-  return { map, count: texts.length, missingStyles: [...missing], unavailableStyles: [...unavailable], skipped };
+  return { map, count: texts.length, missingStyles: [...missing], unavailableStyles: [...unavailable], skipped,
+    ...(DRY_RUN ? { dryRun: true, planned: texts.length - skipped.length } : {}) };
 }

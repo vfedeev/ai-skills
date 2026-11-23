@@ -1,4 +1,4 @@
-// Отвязывает клон концепции от внешней библиотеки — для use_figma.
+// Отвязывает клон концепции от внешней библиотеки — для use_figma / figma_execute.
 // Когда нужен: концепция собрана на стилях и компонентах чужой библиотеки (color-audit.js
 // вернул большой `styled`, в инвентаре инстансы с remote = true), и дизайнер согласился
 // заменить их локальными ролями и стилями (references/colors.md, «Концепция на библиотеке»).
@@ -16,15 +16,21 @@
 // Шрифты недоступны — тексты на них пропускает (fontBlocked), инстансы и стили остальных
 // узлов всё равно отвязывает; после него по тому же узлу — restyle-texts.js.
 //
-// Использование: вставить в скрипт use_figma, заполнить REMOTE_TO_LOCAL и вызвать
+// Использование: вставить в скрипт use_figma / figma_execute, заполнить REMOTE_TO_LOCAL и вызвать
 //   const node = await detachLibrary(clone)   // инстанс вернётся фреймом — брать результат
 //   return detachLibrary.report
+// DRY_RUN = true (умолчание): считает загрузку шрифтов и все проверки, в отчёте — планируемые
+// действия (detached/restyled/stylesCleared — будущие объёмы, проблемные списки те же); узлы
+// не меняются, node возвращается исходный. Поставить false, чтобы писать по-настоящему.
 // Локальные стили создать заранее (этап А, шаг 6): копировать fontName, fontSize, lineHeight,
 // letterSpacing, textCase, textDecoration, paragraphSpacing с библиотечного стиля.
 
 const REMOTE_TO_LOCAL = {
   // 'Заголовок 2': 'Заголовок / L',
 };
+// true — проверить и посчитать планируемые действия, ничего не менять (node останется
+// исходным). Поставить false, чтобы писать по-настоящему: detach, стили, снятие цветовых стилей.
+const DRY_RUN = true;
 // Для текстов без стиля. Подстроить под шкалу из дизайн-правила.md.
 const STYLE_KEY = (style, size, textCase, lineHeightPct) => {
   const bold = /Semi|Bold/i.test(style), italic = /Italic/i.test(style);
@@ -42,11 +48,16 @@ async function detachLibrary(node) {
   const byName = Object.fromEntries(local.map(s => [norm(s.name), s]));
   const localIds = new Set(local.map(s => s.id));
   for (const s of local) await figma.loadFontAsync(s.fontName);
-  const rep = detachLibrary.report = { detached: 0, restyled: 0, byKey: [], stylesCleared: 0, missingStyles: [], unmapped: [], caseChanged: [], fontBlocked: [] };
+  const rep = detachLibrary.report = { dryRun: DRY_RUN, detached: 0, restyled: 0, byKey: [], stylesCleared: 0, missingStyles: [], unmapped: [], caseChanged: [], fontBlocked: [] };
   const cache = {};
 
-  if (node.type === 'INSTANCE') { node = node.detachInstance(); rep.detached++; }
-  if ('children' in node) { let i; while ((i = node.findOne(n => n.type === 'INSTANCE'))) { i.detachInstance(); rep.detached++; } }
+  // в DRY_RUN ничего не отвязываем: только считаем, сколько инстансов было бы отвязано
+  // (вложенные видны findAll и без detach — число совпадает с реальным прогоном)
+  if (node.type === 'INSTANCE') { rep.detached++; if (!DRY_RUN) node = node.detachInstance(); }
+  if ('children' in node) {
+    if (DRY_RUN) rep.detached += node.findAll(n => n.type === 'INSTANCE').length;
+    else { let i; while ((i = node.findOne(n => n.type === 'INSTANCE'))) { i.detachInstance(); rep.detached++; } }
+  }
   const all = 'children' in node ? [node, ...node.findAll(() => true)] : [node];
 
   for (const n of all) {
@@ -73,16 +84,16 @@ async function detachLibrary(node) {
           const st = byName[norm(target)];
           if (!st) { if (!rep.missingStyles.includes(target)) rep.missingStyles.push(target); }
           else {
-            await n.setRangeTextStyleIdAsync(s.start, s.end, st.id); rep.restyled++;
+            rep.restyled++; if (!DRY_RUN) await n.setRangeTextStyleIdAsync(s.start, s.end, st.id);
             // регистр берётся из стиля: сегмент был в другом регистре — показать, не чинить молча
             if (st.textCase !== s.textCase && rep.caseChanged.length < 30) rep.caseChanged.push(`«${n.characters.slice(s.start, s.end).slice(0, 20)}» ${s.textCase} → ${st.textCase} (${st.name}) #${n.id}`);
           }
         }
-        if (s.fillStyleId) { await n.setRangeFillStyleIdAsync(s.start, s.end, ''); rep.stylesCleared++; }
+        if (s.fillStyleId) { rep.stylesCleared++; if (!DRY_RUN) await n.setRangeFillStyleIdAsync(s.start, s.end, ''); }
       }
-    } else if ('fillStyleId' in n && typeof n.fillStyleId === 'string' && n.fillStyleId) { await n.setFillStyleIdAsync(''); rep.stylesCleared++; }
-    if ('strokeStyleId' in n && typeof n.strokeStyleId === 'string' && n.strokeStyleId) { await n.setStrokeStyleIdAsync(''); rep.stylesCleared++; }
-    if ('effectStyleId' in n && typeof n.effectStyleId === 'string' && n.effectStyleId) { await n.setEffectStyleIdAsync(''); rep.stylesCleared++; }
+    } else if ('fillStyleId' in n && typeof n.fillStyleId === 'string' && n.fillStyleId) { rep.stylesCleared++; if (!DRY_RUN) await n.setFillStyleIdAsync(''); }
+    if ('strokeStyleId' in n && typeof n.strokeStyleId === 'string' && n.strokeStyleId) { rep.stylesCleared++; if (!DRY_RUN) await n.setStrokeStyleIdAsync(''); }
+    if ('effectStyleId' in n && typeof n.effectStyleId === 'string' && n.effectStyleId) { rep.stylesCleared++; if (!DRY_RUN) await n.setEffectStyleIdAsync(''); }
   }
   // missingStyles / unmapped не пусты — завести недостающие локальные стили или дописать
   // REMOTE_TO_LOCAL и запустить снова (функция идемпотентна для уже локальных стилей).

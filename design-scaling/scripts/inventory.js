@@ -1,7 +1,8 @@
-// Инвентаризация макета для use_figma (только чтение).
+// Инвентаризация макета для use_figma / figma_execute (только чтение).
 // Перед запуском заменить ROOT_ID на id фрейма концепции (из ссылки: node-id=1-98 → '1:98').
 // Возвращает частоты значений: текстовые стили, цвета, отступы, радиусы, обводки, эффекты,
-// x-координаты левых краёв (для восстановления сетки) и список секций.
+// x-координаты левых краёв (для восстановления сетки), список секций и offScale —
+// значения без привязки к переменным шкалы (см. комментарий у их сбора).
 // Значения с count 1–2 рядом с частыми соседями — кандидаты в «разнобой».
 
 const ROOT_ID = '1:98';
@@ -24,6 +25,14 @@ const text = new Map(), textFill = new Map(), fills = new Map(), strokes = new M
   pad = new Map(), gap = new Map(), radius = new Map(), effects = new Map(), leftX = new Map(),
   imgRatio = new Map();
 
+// offScale — «сырые» значения вне переменных шкалы: паддинги, интервалы и радиусы без
+// привязки в boundVariables, плюс тексты без текстового стиля. QA-гейт этапа B требует,
+// чтобы offScale был пуст; непустые записи допустимы только если каждая названа в отчёте
+// как осознанное исключение. Нули не считаем: это не значения шкалы, и они замусорили бы
+// отчёт. В примерах — «секция / имя узла», до 3 штук на значение.
+const osPad = new Map(), osGap = new Map(), osRadius = new Map();
+const textNoStyle = { n: 0, ex: [] };
+
 const nodes = root.findAll(() => true);
 for (const n of nodes) {
   if (!n.visible) continue;
@@ -38,6 +47,14 @@ for (const n of nodes) {
       if (f) bump(textFill, hex(f.color) + (f.opacity < 1 ? ' @' + f.opacity.toFixed(2) : ''), where);
     }
     bump(leftX, absX(n), where);
+    // offScale (d): текст с символами, но без стиля: один textStyleId === '' или MIXED —
+    // тогда смотрим сегменты (стиля нет, если хоть один сегмент не привязан)
+    const ts = n.textStyleId;
+    if (n.characters && (ts === '' ||
+        (ts === figma.mixed && n.getStyledTextSegments(['textStyleId']).some(sg => !sg.textStyleId)))) {
+      textNoStyle.n++;
+      if (textNoStyle.ex.length < 10) textNoStyle.ex.push(where);
+    }
     continue;
   }
   if ('fills' in n && Array.isArray(n.fills)) for (const f of n.fills) {
@@ -56,8 +73,23 @@ for (const n of nodes) {
   if ('layoutMode' in n && n.layoutMode !== 'NONE') {
     bump(pad, `${n.paddingTop}/${n.paddingRight}/${n.paddingBottom}/${n.paddingLeft}`, where);
     if (n.primaryAxisAlignItems !== 'SPACE_BETWEEN') bump(gap, `${n.layoutMode[0]} ${n.itemSpacing}`, where);
+    // offScale (a)+(b): стороны паддингов и интервалы без записи в boundVariables — сырое значение
+    const bv = n.boundVariables || {};
+    for (const k of ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft'])
+      if (typeof n[k] === 'number' && n[k] > 0 && !bv[k]) bump(osPad, Math.round(n[k]), where);
+    for (const k of ['itemSpacing', 'counterAxisSpacing'])
+      if (typeof n[k] === 'number' && n[k] > 0 && !bv[k]) bump(osGap, Math.round(n[k]), where);
   }
   if ('cornerRadius' in n && n.cornerRadius !== figma.mixed && n.cornerRadius > 0) bump(radius, n.cornerRadius, where);
+  // offScale (c): несвязанные радиусы; общий радиус, привязанный четырьмя переменными
+  // углов (ключи topLeftRadius…), считаем привязанным
+  if ('cornerRadius' in n) {
+    const bv = n.boundVariables || {};
+    if (typeof n.cornerRadius === 'number' && n.cornerRadius > 0 && !bv.cornerRadius && !bv.topLeftRadius)
+      bump(osRadius, Math.round(n.cornerRadius), where);
+    else if (n.cornerRadius === figma.mixed) for (const k of ['topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius'])
+      if (typeof n[k] === 'number' && n[k] > 0 && !bv[k]) bump(osRadius, Math.round(n[k]), where);
+  }
   if ('effects' in n && n.effects.length) for (const e of n.effects) if (e.visible !== false)
     bump(effects, `${e.type} r${e.radius}${e.offset ? ` ${e.offset.x},${e.offset.y}` : ''}${e.color ? ' ' + hex(e.color) + ' @' + e.color.a.toFixed(2) : ''}`, where);
 }
@@ -75,7 +107,10 @@ const out = {
   text: top(text, 50), textFill: top(textFill), fills: top(fills), strokes: top(strokes),
   padding: top(pad), gap: top(gap), radius: top(radius), effects: top(effects),
   leftX: top(leftX, 30), imageRatios: top(imgRatio, 20),
+  offScale: { pad: top(osPad), gap: top(osGap), radius: top(osRadius), textNoStyle },
 };
 const size = JSON.stringify(out).length;
-if (size > 60000) { for (const k of ['text', 'fills', 'padding', 'gap', 'leftX']) out[k] = out[k].map(r => ({ v: r.v, n: r.n, ex: r.ex.slice(0, 1) })); }
+if (size > 60000) { for (const k of ['text', 'fills', 'padding', 'gap', 'leftX']) out[k] = out[k].map(r => ({ v: r.v, n: r.n, ex: r.ex.slice(0, 1) }));
+  for (const k of ['pad', 'gap', 'radius']) out.offScale[k] = out.offScale[k].map(r => ({ v: r.v, n: r.n, ex: r.ex.slice(0, 1) }));
+  out.offScale.textNoStyle = { n: textNoStyle.n, ex: textNoStyle.ex.slice(0, 3) }; }
 return out;

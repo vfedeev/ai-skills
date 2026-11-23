@@ -1,10 +1,10 @@
-// Мини-фото внутри строки текста («Лид с врезками», приём фрэнки «мини-фото во фразе») — для use_figma.
+// Мини-фото внутри строки текста («Лид с врезками», приём фрэнки «мини-фото во фразе») — для use_figma / figma_execute.
 // В Figma нельзя вставить картинку в текст. Приём концепций: в текст вставляют пробелы
 // («окно»), а фото кладут поверх окна абсолютно. Позицию окна не угадывать — эта функция
 // её измеряет: подбирает число пробелов под ширину фото, находит строку и x начала окна,
 // переносит окно на следующее слово, если оно попало на перенос строки.
 //
-// Использование: вставить в скрипт use_figma и вызвать
+// Использование: вставить в скрипт use_figma / figma_execute и вызвать
 //   const res = await inlinePhotoGaps({
 //     parent,                 // фрейм без auto layout (или с clipsContent = false), куда класть текст и фото
 //     text: 'The studio is a new contemporary art gallery that …',  // дословно из текстов страницы
@@ -15,9 +15,18 @@
 //     muted: { role: 'текст/второстепенный', phrases: ['contemporary art gallery'] },  // необязательно
 //   })
 //   → { textId, photos: [{ id, x, y }], spaces, moved: [...], failed: [...] }
+// DRY_RUN = true (умолчание): постоянных узлов не создаёт — замерные клоны (tmp, wm)
+// удаляются, как и раньше; финальные текст и фото-фреймы не создаются, parent не
+// ресайзится; в photos — планируемые x/y (id: null), textId: null, plannedText — текст
+// с вставленными окнами; отсутствующие роли — в noRoles (в реальном прогоне это бросок).
+// Поставить false, чтобы писать по-настоящему.
 // Затем — image-prompt.js по photos[].id. В отчёт: «в текст вставлены пробелы под врезки» —
 // слова не менялись, но символы текста отличаются от источника.
 // Межстрочный стиля — в процентах или px; AUTO не поддержан (вернёт ошибку).
+
+// true — замер и отчёт без постоянной записи: финальные узлы не создаются.
+// Поставить false, чтобы вставлять текст и врезки по-настоящему.
+const DRY_RUN = true;
 
 async function inlinePhotoGaps(o) {
   const st = (await figma.getLocalTextStylesAsync()).find(s => s.name === o.style);
@@ -74,6 +83,15 @@ async function inlinePhotoGaps(o) {
   }
   tmp.remove(); wm.remove();
 
+  // dry-run: постоянных узлов не создаём. Проверяем то, на чём упал бы реальный прогон:
+  // наличие ролей (paint бросил бы «Нет роли») и фразы muted; отдаём план раскладки
+  if (DRY_RUN) {
+    const noRoles = [];
+    for (const rn of [o.role, o.photo.role, o.muted && o.muted.role]) if (rn && !vars.find(x => x.name === rn)) noRoles.push(rn);
+    if (o.muted) for (const ph of o.muted.phrases) if (F.indexOf(ph) < 0) failed.push('muted: нет фразы «' + ph + '»');
+    return { textId: null, photos: photos.map(p => ({ id: null, x: p.x, y: p.y })), spaces: k, moved, failed, noRoles,
+      dryRun: true, plannedText: F };
+  }
   const t = figma.createText(); o.parent.appendChild(t); t.textStyleId = st.id; t.characters = F;
   t.resize(o.width, 10); t.textAutoResize = 'HEIGHT'; t.x = 0; t.y = 0; t.fills = [await paint(o.role)];
   if (o.muted) for (const ph of o.muted.phrases) { const i = F.indexOf(ph); if (i >= 0) t.setRangeFills(i, i + ph.length, [await paint(o.muted.role)]); else failed.push('muted: нет фразы «' + ph + '»'); }
