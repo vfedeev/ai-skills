@@ -10,6 +10,49 @@
 - **QA**: первична программная геометрия (`qa-geometry.js`: границы секций, клипы, переполнение auto-layout, наезды текстов), вторична vision-сверка скриншотов
 - **Шрифты**: сценарии «доступны / библиотека + недоступны / недоступны» с заменами из Google Fonts и скриптом `restyle-texts.js`
 
+## Схема пайплайна
+
+Значения — только из концепции / правил; фрэнки даёт композицию, но не цвета, шрифты, тексты или картинки. Работа не закончена, пока `color-audit.js` `unbound = []` и `qa-geometry.js` `issueCount = 0`.
+
+```mermaid
+flowchart TD
+    START{"Что есть в проекте?"}
+    IN0["ФП + тексты + фрэнки<br/>+ таблица выводов"]
+
+    subgraph S0["Этап 0 · первая концепция"]
+        PROTO["ч/б композиционный прототип<br/>редактируемый, БЭМ"]
+        HIFI["Hi-fi-концепция"]
+        PROTO -->|"согласование композиции"| HIFI
+    end
+
+    subgraph SA["Этап А · правила + UI-kit (один раз на проект)"]
+        INV["инвентаризация концепции<br/>inventory.js"]
+        RULES["дизайн-правила.md"]
+        KIT["UI-kit в Figma<br/>цветовые переменные · TEXT-стили"]
+        INV --> RULES
+        INV --> KIT
+    end
+
+    subgraph SB["Этап Б · макет страницы (для каждой новой)"]
+        BUILD["сборка по прототипу + текстам<br/>значения из правил / UI-kit"]
+        BIND["цвет → переменная<br/>текст → TEXT-стиль"]
+        BUILD --> BIND
+    end
+
+    GATE{"Приёмка<br/>color-audit unbound=[] · qa-geometry issueCount=0<br/>offScale пуст · количества по ФП · тексты на месте"}
+    REPORT["Отчёт: Готово / Черновик<br/>+ дизайн-статус.md"]
+
+    START -- "нет концепции" --> IN0 --> PROTO
+    START -- "есть концепция" --> INV
+    START -- "есть правила + UI-kit" --> BUILD
+    HIFI -->|"утверждение"| INV
+    RULES --> BUILD
+    KIT --> BUILD
+    BIND --> GATE
+    GATE -- дефект --> BUILD
+    GATE -- ок --> REPORT
+```
+
 ## Триггеры
 
 «Создай первую концепцию», «у меня нет готовой главной в Figma», «сделай дизайн по ФП и фрэнки», «изучи концепцию», «составь правила / гайдлайн по макету», «собери UI-kit из макета», «сделай дизайн страницы по прототипу», «сверстай страницу по текстам», «сделай страницу по фрэнки», «масштабируй дизайн на другие страницы», «привяжи цвета к переменным».
@@ -59,9 +102,9 @@ cp -r design-scaling ~/.hermes/skills/   # или ~/.claude/skills/ для Claud
 ### Из ZIP-архива
 
 ```bash
-curl -L -o ai-skills.zip https://github.com/vfedeev/ai-skills/releases/latest/download/ai-skills-v3.7.0.zip
+curl -L -o ai-skills.zip https://github.com/vfedeev/ai-skills/releases/latest/download/ai-skills-v3.8.1.zip
 unzip ai-skills.zip
-cp -r ai-skills-v3.7.0/design-scaling ~/.hermes/skills/
+cp -r ai-skills-v3.8.1/design-scaling ~/.hermes/skills/
 ```
 
 ## Быстрый старт
