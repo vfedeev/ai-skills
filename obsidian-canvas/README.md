@@ -19,6 +19,24 @@
 
 Не подходит для: чтения/поиска по vault (скилл `obsidian`), работы через Local REST API (`obsidian-vault-automation`).
 
+## Схема алгоритма
+
+```mermaid
+flowchart TD
+    CMD["canvas_cli.py list / create / add"] --> V["vault: --vault → env OBSIDIAN_VAULT → дефолт"]
+    V --> STT{"Целевой .canvas сейчас синхронизируется<br/>(~syncthing~*)?"}
+    STT -->|да| RC5["rc=5: повторить позже,<br/>холст не тронут"]
+    STT -->|нет| ACT{"Команда"}
+    ACT -->|list| LS["Рекурсивный поиск *.canvas,<br/>пропуск .obsidian/.trash/.git"]
+    ACT -->|create NAME| CR["Пустой холст в корне;<br/>коллизия имён — отказ, не перезапись"]
+    ACT -->|add SOURCE| DL["URL/файл → скачивание →<br/>формат и натуральный размер<br/>(свой парсер заголовков, Pillow опц.)"]
+    DL --> PLACE["Автораскладка: чтение существующих нод,<br/>ряд до 1600px, gap 40, h=300 —<br/>поверх чужих нод не ставит"]
+    PLACE --> IMG["Файл картинки → в vault"]
+    IMG --> WR["tempfile → fsync → atomic replace → chmod 644"]
+    WR --> VA["Verify-after-write по id ноды с повторами<br/>(гонка с открытым Obsidian)"]
+    VA --> J["Одна JSON-строка в stdout;<br/>rc 0/2/3/4/5"]
+```
+
 ## Комплект скриптов
 
 | Скрипт | Назначение |

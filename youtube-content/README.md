@@ -15,6 +15,27 @@
 - Пользователь прислал ссылку на YouTube / «сделай саммари видео», «достань транскрипт», «собери тред/статью по видосу»
 - Любая задача «видео → текст → форматированный контент»
 
+## Схема алгоритма
+
+```mermaid
+flowchart TD
+    Y["Ссылка YouTube (watch/youtu.be/shorts/embed/live) или ID"] --> P["fetch_transcript.py:<br/>youtube-transcript-api, пауза 3–15 с, ретраи"]
+    P --> HAS{"Субтитры есть?"}
+    HAS -->|да| TR["Транскрипт plain / [MM:SS],<br/>цепочка языков --language ru,en"]
+    HAS -->|нет/403| F2["yt-dlp субтитры:<br/>player_client, cookies, invidious"]
+    F2 --> H2{"Получилось?"}
+    H2 -->|да| TR
+    H2 -->|нет| F3["groq_transcribe.sh:<br/>yt-dlp аудио → ffmpeg чанки ≤20 мин →<br/>Groq Whisper → склейка"]
+    F3 --> CMP["compact_transcript.py:<br/>verbose_json → компактный,<br/>фильтр --from/--to"]
+    CMP --> TR
+    TR --> FMT{"Запрошенный формат"}
+    FMT --> C1["Chapters"]
+    FMT --> C2["Summary / Chapter summaries"]
+    FMT --> C3["Thread (X)"]
+    FMT --> C4["Blog post"]
+    FMT --> C5["Quotes"]
+```
+
 ## Комплект
 
 | Файл | Назначение |
