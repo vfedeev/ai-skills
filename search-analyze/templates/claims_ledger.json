@@ -1,0 +1,25 @@
+{
+  "rubric_version": "1.0",
+  "task_contract": {
+    "scope": "<что в волне и что вне>",
+    "budget": "≤5 источников, ≤3 поиска на сервис",
+    "acceptance": "каждый claim с source_url; CONFIRMED только по воспроизводимому check",
+    "mandatory_failures": ["нет первоисточника => не CONFIRMED", "самозаявление => не независимое подтверждение"],
+    "stop_rule": "loop-until-dry: 2 пустых раунда или бюджет исчерпан"
+  },
+  "seen": ["<все URL/claims, видевшиеся в волнах, ВКЛЮЧАЯ отвергнутые — иначе цикл не высыхает>"],
+  "claims": [
+    {
+      "id": "C-001",
+      "text": "<формулировка, нагружающая вывод>",
+      "source_urls": ["https://..."],
+      "status": "UNKNOWN",
+      "confidence": "High|Medium|Low",
+      "verification_note": "<что проверено, чем; обязательна для CONFIRMED>",
+      "verifier": "<имя проверки: web_extract/grep-panel, НЕ автор claim>",
+      "attempts": 0,
+      "checked_at": "<YYYY-MM-DD>",
+      "evidence_files": ["quote-evidence/<slug>.txt"]
+    }
+  ]
+}
